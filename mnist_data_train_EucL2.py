@@ -25,32 +25,19 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-pca = PCA(n_components=500)
+# Reduce the number of principal components to 100
+pca = PCA(n_components=100)
 X_train_pca = pca.fit_transform(X_train_scaled)
-
 X_test_pca = pca.transform(X_test_scaled)
 
-# Convert y_train to numpy array
 y_train_np = np.array(y_train)
 
 # Euclidean model (L2)
 euclidean_model = NearestNeighbors(n_neighbors=3, metric='euclidean')
 euclidean_model.fit(X_train_pca, y_train_np)
 
-# Predict using Euclidean model
 distances, indices = euclidean_model.kneighbors(X_test_pca)
 y_pred_euclidean = mode(y_train_np[indices], axis=1).mode.flatten()
 
 accuracy_euclidean = accuracy_score(y_test, y_pred_euclidean)
 print(f"Test set accuracy with Euclidean model: {accuracy_euclidean:.4f}")
-
-# Optionally, you can add L3 (Minkowski with p=3) model
-minkowski_model = NearestNeighbors(n_neighbors=3, metric='minkowski', p=3)
-minkowski_model.fit(X_train_pca, y_train_np)
-
-# Predict using Minkowski model
-_, indices = minkowski_model.kneighbors(X_test_pca)  # Removed distances
-y_pred_minkowski = mode(y_train_np[indices], axis=1).mode.flatten()
-
-accuracy_minkowski = accuracy_score(y_test, y_pred_minkowski)
-print(f"Test set accuracy with Minkowski (L3) model: {accuracy_minkowski:.4f}")
