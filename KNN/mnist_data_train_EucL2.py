@@ -24,6 +24,10 @@ def deskew(image):
     return img
 
 
+def reduce_noise(image):
+    return cv2.GaussianBlur(image, (5, 5), 0)
+
+
 mnist = fetch_openml('mnist_784', version=1)
 
 X, y = mnist["data"], mnist["target"]
@@ -32,13 +36,13 @@ y = y.astype(int)
 # Convert DataFrame to NumPy array and then to float32
 X = X.to_numpy().astype(np.float32)
 
-# Deskew images
-X_deskewed = np.array([deskew(x.reshape(28, 28)).flatten() for x in X])
+# Deskew and reduce noise in images
+X_processed = np.array([reduce_noise(deskew(x.reshape(28, 28))).flatten() for x in X])
 
-print(f"Feature matrix shape: {X_deskewed.shape}")
+print(f"Feature matrix shape: {X_processed.shape}")
 print(f"Labels shape: {y.shape}")
 
-X_train, X_test, y_train, y_test = train_test_split(X_deskewed, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_processed, y, test_size=0.2, random_state=42)
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
