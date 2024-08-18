@@ -10,32 +10,56 @@ from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
 from scipy.stats import mode
 import numpy as np
+import cv2
+
+
+def deskew(image):
+    moments = cv2.moments(image)
+    if abs(moments['mu02']) < 1e-2:
+        return image.copy()
+    skew = moments['mu11'] / moments['mu02']
+    M = np.float32([[1, skew, -0.5 * 28 * skew], [0, 1, 0]])
+    img = cv2.warpAffine(image, M, (28, 28), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
+    return img
+
+
+def reduce_noise(image):
+    return cv2.GaussianBlur(image, (5, 5), 0)
+
 
 mnist = fetch_openml('mnist_784', version=1)
 
 X, y = mnist["data"], mnist["target"]
 y = y.astype(int)
 
-print(f"Feature matrix shape: {X.shape}")
+# Convert DataFrame to NumPy array and then to float32
+X = X.to_numpy().astype(np.float32)
+
+# Deskew and reduce noise in images
+X_processed = np.array([reduce_noise(deskew(x.reshape(28, 28))).flatten() for x in X])
+
+print(f"Feature matrix shape: {X_processed.shape}")
 print(f"Labels shape: {y.shape}")
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_processed, y, test_size=0.2, random_state=42)
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
+# Reduce the number of principal components to 100
 pca = PCA(n_components=100)
 X_train_pca = pca.fit_transform(X_train_scaled)
 X_test_pca = pca.transform(X_test_scaled)
 
 y_train_np = np.array(y_train)
 
+# Minkowski model (L3)
 minkowski_model = NearestNeighbors(n_neighbors=3, metric='minkowski', p=3, algorithm='auto')
 minkowski_model.fit(X_train_pca, y_train_np)
 
 # Predict using Minkowski model
-_, indices = minkowski_model.kneighbors(X_test_pca)  # Removed distances
+_, indices = minkowski_model.kneighbors(X_test_pca)
 y_pred_minkowski = mode(y_train_np[indices], axis=1).mode.flatten()
 
 accuracy_minkowski = accuracy_score(y_test, y_pred_minkowski)
