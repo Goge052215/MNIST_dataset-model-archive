@@ -11,7 +11,7 @@ cap = cv2.VideoCapture(0 + cv2.CAP_DSHOW)
 WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-def prediction(image, model):
+def predicgition(image, model):
     img = cv2.resize(image, (28, 28))
     img = img / 255
     img = img.reshape(1, 28, 28, 1)
