@@ -1,4 +1,5 @@
 import os
+
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from sklearn.datasets import fetch_openml
@@ -10,16 +11,34 @@ from sklearn.metrics import accuracy_score
 from sklearn.neighbors import NearestNeighbors
 from scipy.stats import mode
 import numpy as np
+import cv2
+
+
+def deskew(image):
+    moments = cv2.moments(image)
+    if abs(moments['mu02']) < 1e-2:
+        return image.copy()
+    skew = moments['mu11'] / moments['mu02']
+    M = np.float32([[1, skew, -0.5 * 28 * skew], [0, 1, 0]])
+    img = cv2.warpAffine(image, M, (28, 28), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
+    return img
+
 
 mnist = fetch_openml('mnist_784', version=1)
 
 X, y = mnist["data"], mnist["target"]
 y = y.astype(int)
 
-print(f"Feature matrix shape: {X.shape}")
+# Convert DataFrame to NumPy array and then to float32
+X = X.to_numpy().astype(np.float32)
+
+# Deskew images
+X_deskewed = np.array([deskew(x.reshape(28, 28)).flatten() for x in X])
+
+print(f"Feature matrix shape: {X_deskewed.shape}")
 print(f"Labels shape: {y.shape}")
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_deskewed, y, test_size=0.2, random_state=42)
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
