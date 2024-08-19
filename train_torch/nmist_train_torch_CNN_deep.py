@@ -79,7 +79,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=20):
             running_loss += loss.item()
             progress_bar.set_postfix(loss=running_loss/(i+1))
         scheduler.step()
-    torch.save(model.state_dict(), 'cnn_deep_model.pth')  # Save the trained model
+    torch.save(model.state_dict(), '../models/cnn_deep_model.pth')  # Save the trained model
 
 
 def evaluate(model, test_loader):
