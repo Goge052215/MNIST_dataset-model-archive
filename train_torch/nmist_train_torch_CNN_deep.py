@@ -56,9 +56,10 @@ print(f"Using device: {device}")
 model = EnhancedCNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+'optimizer = optim.Adam(model.parameters(), lr=0.001)'
 'optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)'
 'optimizer = optim.NAdam(model.parameters(), lr=0.001)'
+optimizer = optim.RMSprop(model.parameters(), lr=0.001)
 
 # Use StepLR for more gradual learning rate reduction
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
