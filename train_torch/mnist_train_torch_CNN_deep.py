@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.optim import RMSprop
 
 
 # Define transformations with enhanced data augmentation
@@ -14,6 +13,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5,), (0.5,))
 ])
+
 
 train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
@@ -56,14 +56,14 @@ print(f"Using device: {device}")
 model = EnhancedCNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-'''optimizer = optim.Adam(model.parameters(), lr=0.001)'''
-'''optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)'''
-'''optimizer = optim.NAdam(model.parameters(), lr=0.001)'''
+'optimizer = optim.Adam(model.parameters(), lr=0.001)'
+'optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)'
+'optimizer = optim.NAdam(model.parameters(), lr=0.001)'
 optimizer = optim.RMSprop(model.parameters(), lr=0.001)
 
 # Use StepLR for more gradual learning rate reduction
-'''scheduler = StepLR(optimizer, step_size=5, gamma=0.5)'''
-scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)
+scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+'''scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)'''
 
 
 def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=20):
@@ -80,8 +80,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=20):
             optimizer.step()
             running_loss += loss.item()
             progress_bar.set_postfix(loss=running_loss/(i+1))
-        # Pass the running loss to the scheduler
-        scheduler.step(running_loss / len(train_loader))
+        scheduler.step()
     torch.save(model.state_dict(), '../models/cnn_deep_model.pth')  # Save the trained model
 
 
