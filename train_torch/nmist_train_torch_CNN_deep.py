@@ -14,6 +14,7 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
+
 train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
@@ -94,6 +95,7 @@ def evaluate(model, test_loader):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     print(f'Accuracy: {100 * correct / total:.2f}%')
+
 
 if __name__ == '__main__':
     train(model, train_loader, criterion, optimizer, scheduler)
