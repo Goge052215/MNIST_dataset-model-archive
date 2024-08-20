@@ -7,7 +7,6 @@ from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-
 # Define transformations with enhanced data augmentation
 transform = transforms.Compose([
     transforms.ToTensor(),
