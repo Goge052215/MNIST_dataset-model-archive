@@ -66,7 +66,7 @@ scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 '''scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)'''
 
 
-def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=20):
+def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=18):
     model.train()
     for epoch in range(num_epochs):
         running_loss = 0.0

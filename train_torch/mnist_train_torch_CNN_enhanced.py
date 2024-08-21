@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import StepLR
 from torchvision.transforms import GaussianBlur
-
+from torch.optim.rmsprop import RMSprop
 
 def elastic_transform(image, alpha, sigma):
     shape = image.shape[1:]
@@ -40,9 +40,9 @@ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
 
 
-class SimpleCNN(nn.Module):
+class EnhancedCNN_V2(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__()
+        super(EnhancedCNN_V2, self).__init__()
         self.conv1 = nn.Conv2d(1, 20, kernel_size=5, stride=1, padding=0)
         self.conv2 = nn.Conv2d(20, 40, kernel_size=5, stride=1, padding=0)
         self.fc1 = nn.Linear(40 * 4 * 4, 150)
@@ -62,10 +62,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 # Create an ensemble of 7 CNN models
-committee = [SimpleCNN().to(device) for _ in range(7)]
+committee = [EnhancedCNN_V2().to(device) for _ in range(7)]
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.AdamW(sum([list(model.parameters()) for model in committee], []), lr=0.001)
+optimizer = optim.Adam(sum([list(model.parameters()) for model in committee], []), lr=0.001)
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
 
