@@ -56,9 +56,9 @@ model = EnhancedCNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
 'optimizer = optim.Adam(model.parameters(), lr=0.001)'
-'optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)'
-optimizer = optim.NAdam(model.parameters(), lr=0.001)
-'optimizer = optim.RMSprop(model.parameters(), lr=0.001)'
+'optimizer = optim.AdamW(model.parameters(), lr=0.001)'
+'optimizer = optim.NAdam(model.parameters(), lr=0.001)'
+optimizer = optim.RMSprop(model.parameters(), lr=0.001)
 
 # Use StepLR for more gradual learning rate reduction
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
@@ -81,7 +81,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=20):
             progress_bar.set_postfix(loss=running_loss/(i+1))
         scheduler.step()
         'scheduler.step(running_loss / len(train_loader))'
-    torch.save(model.state_dict(), '../models/cnn_deep_model.pth')  # Save the trained model
+    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
 
 
 def evaluate(model, test_loader):
