@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
-import torch_optimizer as optim
+import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch.nn.functional as F
-
+from torch.optim.lr_scheduler import StepLR
 from torchvision.transforms import GaussianBlur
+
 
 def elastic_transform(image, alpha, sigma):
     shape = image.shape[1:]
@@ -24,6 +25,7 @@ def elastic_transform(image, alpha, sigma):
     grid = torch.stack([x_new, y_new], dim=-1).unsqueeze(0)
     return F.grid_sample(image.unsqueeze(0), grid, mode='bilinear', padding_mode='reflection').squeeze(0)
 
+
 # Define transformations with elastic distortions
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -36,6 +38,7 @@ test_dataset = datasets.MNIST(root='./data', train=False, download=True, transfo
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
+
 
 class SimpleCNN(nn.Module):
     def __init__(self):
@@ -54,6 +57,7 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return x
 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
@@ -63,6 +67,7 @@ committee = [SimpleCNN().to(device) for _ in range(7)]
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(sum([list(model.parameters()) for model in committee], []), lr=0.001)
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+
 
 def train(committee, train_loader, criterion, optimizer, scheduler, num_epochs=20):
     for model in committee:
@@ -87,7 +92,8 @@ def train(committee, train_loader, criterion, optimizer, scheduler, num_epochs=2
         scheduler.step(running_loss / len(train_loader))
     
     for idx, model in enumerate(committee):
-        torch.save(model.state_dict(), f'../models/cnn_deep_model_{idx}.pth')  # Save each model in the committee
+        torch.save(model.state_dict(), f'models/cnn_deep_model_{idx}.pth')  # Save each model in the committee
+
 
 def evaluate(committee, test_loader):
     for model in committee:
@@ -106,6 +112,7 @@ def evaluate(committee, test_loader):
             correct += (predicted == labels).sum().item()
     
     print(f'Accuracy: {100 * correct / total:.2f}%')
+
 
 if __name__ == '__main__':
     train(committee, train_loader, criterion, optimizer, scheduler)

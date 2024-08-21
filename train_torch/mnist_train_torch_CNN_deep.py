@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.rmsprop import RMSprop
 
 # Define transformations with enhanced data augmentation
 transform = transforms.Compose([
@@ -57,8 +58,8 @@ model = EnhancedCNN().to(device)
 criterion = nn.CrossEntropyLoss()
 'optimizer = optim.Adam(model.parameters(), lr=0.001)'
 'optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)'
-optimizer = optim.NAdam(model.parameters(), lr=0.001)
-'optimizer = optim.RMSprop(model.parameters(), lr=0.001)'
+'optimizer = optim.NAdam(model.parameters(), lr=0.001)'
+optimizer = RMSprop(model.parameters(), lr=0.001)
 
 # Use StepLR for more gradual learning rate reduction
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
