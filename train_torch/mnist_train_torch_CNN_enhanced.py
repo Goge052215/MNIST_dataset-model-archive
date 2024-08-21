@@ -9,6 +9,7 @@ from torch.optim.lr_scheduler import StepLR
 from torchvision.transforms import GaussianBlur
 from torch.optim.rmsprop import RMSprop
 
+
 def elastic_transform(image, alpha, sigma):
     shape = image.shape[1:]
     dx = torch.randn(shape) * sigma
