@@ -103,3 +103,4 @@ def evaluate(model, test_loader):
 if __name__ == '__main__':
     train(model, train_loader, criterion, optimizer, scheduler)
     evaluate(model, test_loader)
+    
