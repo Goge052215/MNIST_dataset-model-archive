@@ -68,6 +68,7 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         optimizer.step()
 
         train_loader_tqdm.set_postfix(loss=loss.item(), refresh=False)
+    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
 
 
 def test(model, device, test_loader, criterion):
@@ -108,4 +109,4 @@ for epoch in range(1, num_epochs + 1):
     scheduler.step(avg_loss)  # Update learning rate based on training loss
     final_accuracy = accuracy
 
-print(f"Final Accuracy after all epochs: {final_accuracy:.2f}%")
+print(f"Accuracy: {final_accuracy:.2f}%")
