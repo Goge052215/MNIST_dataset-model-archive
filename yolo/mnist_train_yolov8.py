@@ -47,8 +47,22 @@ def create_yolo_labels(data_loader, split):
 create_yolo_labels(train_loader, 'train')
 create_yolo_labels(test_loader, 'val')
 
+yaml_content = f"""
+path: {base_dir}/mnist_yolo  # dataset root dir
+train: train/images  # train images (relative to 'path')
+val: val/images  # val images (relative to 'path')
+
+nc: 10  # number of classes
+names: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']  # class names
+"""
+
+yaml_path = os.path.join(base_dir, 'mnist_yolo.yaml')
+with open(yaml_path, 'w') as f:
+    f.write(yaml_content)
+
+# Then use this path in the train() function
 model = YOLO('yolov8n.pt')  # Load a pre-trained YOLOv8 model (nano version)
-results = model.train(data=os.path.join(base_dir, 'mnist_yolo.yaml'), epochs=10)
+results = model.train(data=yaml_path, epochs=10)
 
 metrics = model.val()
 
