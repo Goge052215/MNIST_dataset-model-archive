@@ -1,4 +1,4 @@
-train: mnist_yolo/train/images
+train: yolo/data/MNIST/raw
 val: mnist_yolo/val/images
 
 nc: 10
