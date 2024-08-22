@@ -10,7 +10,6 @@ from tqdm import tqdm  # Import tqdm for progress bars
 class SimpleYOLO(nn.Module):
     def __init__(self):
         super(SimpleYOLO, self).__init__()
-        # Define a simple CNN
         self.conv1 = nn.Conv2d(1, 16, 3, 1)  # 1 input channel (grayscale), 16 output channels, 3x3 kernel
         self.conv2 = nn.Conv2d(16, 32, 3, 1)
         self.conv3 = nn.Conv2d(32, 64, 3, 1)
@@ -27,7 +26,6 @@ class SimpleYOLO(nn.Module):
         return x
 
 
-# 2. Data Preparation
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
     transforms.ToTensor(),
@@ -40,7 +38,6 @@ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
-# 3. Training and Accuracy Calculation
 def train(model, device, train_loader, optimizer, criterion, epoch):
     model.train()
     train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch}", leave=True)
@@ -83,20 +80,18 @@ def test(model, device, test_loader, criterion):
     return accuracy
 
 
-# 4. Main Training Loop
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SimpleYOLO().to(device)
-optimizer = RMSprop(model.parameters(), lr=0.001)  # Use RMSprop from torch.optim.rmsprop
+optimizer = RMSprop(model.parameters(), lr=0.001)
 criterion = nn.MSELoss()
 
 final_accuracy = 0  # To store the final accuracy after all epochs
 
-num_epochs = 10  # Adjust the number of epochs as needed
+num_epochs = 10
 
 for epoch in range(1, num_epochs + 1):
     train(model, device, train_loader, optimizer, criterion, epoch)
     accuracy = test(model, device, test_loader, criterion)
     final_accuracy = accuracy
 
-# Final accuracy score
 print(f"Final Accuracy after all epochs: {final_accuracy:.2f}%")
