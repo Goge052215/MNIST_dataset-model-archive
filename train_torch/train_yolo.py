@@ -67,6 +67,7 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         optimizer.step()
 
         train_loader_tqdm.set_postfix(loss=loss.item(), refresh=False)
+    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
 
 
 def test(model, device, test_loader, criterion):
