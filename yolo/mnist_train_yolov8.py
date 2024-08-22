@@ -44,12 +44,10 @@ def create_yolo_labels(data_loader, split):
 create_yolo_labels(train_loader, 'train')
 create_yolo_labels(test_loader, 'val')
 
-# Train YOLOv8 on the prepared dataset
 model = YOLO('yolov8n.pt')  # Load a pre-trained YOLOv8 model (nano version)
 results = model.train(data='mnist_yolo.yaml', epochs=10)
 
 # Evaluate the model on the test dataset
 metrics = model.val()
 
-# Print the final accuracy or other relevant metrics
 print(f"Model Performance: {metrics}")
