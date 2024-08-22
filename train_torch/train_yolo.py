@@ -108,4 +108,4 @@ for epoch in range(1, num_epochs + 1):
     scheduler.step(avg_loss)  # Update learning rate based on training loss
     final_accuracy = accuracy
 
-print(f"Final Accuracy after all epochs: {final_accuracy:.2f}%")
+print(f"Accuracy: {final_accuracy:.2f}%")
