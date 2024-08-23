@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm  # Import tqdm for progress bars
 from torch.optim.lr_scheduler import StepLR
 import torch.nn.functional as F
+import os
 
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -54,7 +55,12 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         optimizer.step()
 
         train_loader_tqdm.set_postfix(loss=loss.item(), refresh=False)
-    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
+    
+    # Create the 'models' directory if it doesn't exist
+    os.makedirs('models', exist_ok=True)
+    
+    # Save the model
+    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')
 
 
 def test(model, device, test_loader, criterion):
