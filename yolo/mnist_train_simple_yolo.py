@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.rmsprop import RMSprop  # Import RMSprop from torch.optim.rmsprop
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm  # Import tqdm for progress bars
 from torch.optim.lr_scheduler import StepLR
 
@@ -45,13 +45,20 @@ transform = transforms.Compose([
 train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
 test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
 
+# Split the training data into training and validation sets
+train_size = int(0.8 * len(train_dataset))
+val_size = len(train_dataset) - train_size
+train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
+
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
 def train(model, device, train_loader, optimizer, criterion, epoch):
     model.train()
     train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch}", leave=True)
+    total_loss = 0
     for batch_idx, (data, target) in enumerate(train_loader_tqdm):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -66,8 +73,11 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         loss.backward()
         optimizer.step()
 
+        total_loss += loss.item()
         train_loader_tqdm.set_postfix(loss=loss.item(), refresh=False)
-    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
+    avg_loss = total_loss / len(train_loader)
+    torch.save(model.state_dict(), 'models/yolo_cnn_model.pth')
+    return avg_loss  # Return average loss for the epoch
 
 
 def test(model, device, test_loader, criterion):
@@ -98,14 +108,32 @@ optimizer = RMSprop(model.parameters(), lr=0.001)
 criterion = nn.MSELoss()
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
-final_accuracy = 0  # To store the final accuracy after all epochs
-
-num_epochs = 20
+num_epochs = 50  # Increase max epochs
+patience = 5  # Number of epochs to wait for improvement
+best_val_accuracy = 0
+epochs_without_improvement = 0
 
 for epoch in range(1, num_epochs + 1):
     avg_loss = train(model, device, train_loader, optimizer, criterion, epoch)
-    accuracy = test(model, device, test_loader, criterion)
-    scheduler.step(avg_loss)  # Update learning rate based on training loss
-    final_accuracy = accuracy
+    val_accuracy = test(model, device, val_loader, criterion)
+    test_accuracy = test(model, device, test_loader, criterion)
+    
+    print(f"Epoch {epoch}: Validation Accuracy: {val_accuracy:.2f}%, Test Accuracy: {test_accuracy:.2f}%")
+    
+    scheduler.step()
+    
+    if val_accuracy > best_val_accuracy:
+        best_val_accuracy = val_accuracy
+        epochs_without_improvement = 0
+        torch.save(model.state_dict(), 'models/best_model.pth')
+    else:
+        epochs_without_improvement += 1
+    
+    if epochs_without_improvement >= patience:
+        print(f"Early stopping triggered after {epoch} epochs")
+        break
 
-print(f"Accuracy: {final_accuracy:.2f}%")
+# Load the best model and evaluate on the test set
+model.load_state_dict(torch.load('models/best_model.pth'))
+final_accuracy = test(model, device, test_loader, criterion)
+print(f"Final Test Accuracy: {final_accuracy:.2f}%")

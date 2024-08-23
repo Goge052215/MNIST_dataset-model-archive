@@ -49,6 +49,7 @@ def create_yolo_labels(data_loader, split):
         with open(label_path, 'w') as f:
             f.write(label)
 
+
 if __name__ == '__main__':
     from multiprocessing import freeze_support
     freeze_support()
