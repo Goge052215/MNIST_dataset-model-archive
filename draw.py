@@ -1,8 +1,9 @@
-from tkinter import *
+from tkinter import Tk, Canvas, Button, Scale, HORIZONTAL, RAISED, SUNKEN, ROUND, TRUE # dont use wildcard import
 from tkinter.colorchooser import askcolor
 import threading
 
 from PIL import Image, ImageGrab
+import PIL.ImageOps    
 import pyautogui
 import pygetwindow as gw
 import io 
@@ -11,8 +12,12 @@ import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
-from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
+import torchvision
+import torchvision.transforms.functional as TF
 import torch.nn.functional as F
+
+from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
+from train_torch.mnist_train_torch_CNN_deep import EnhancedCNN, cnn_transform
 
 class Paint(object):
 
@@ -71,8 +76,8 @@ class Paint(object):
     def use_pen(self):
         self.activate_button(self.pen_button)
 
-    def use_brush(self):
-        self.activate_button(self.brush_button)
+    #def use_brush(self):
+        #self.activate_button(self.brush_button)
 
     def choose_color(self):
         self.eraser_on = False
@@ -90,9 +95,10 @@ class Paint(object):
     def clear_canvas(self):
         self.c.delete("all")
         self.objects.clear()  
+        
     def paint(self, event):
         self.line_width = self.choose_size_button.get()
-        paint_color = 'white' if self.eraser_on else self.color
+        paint_color = "white" if self.eraser_on else (self.color if self.color else self.DEFAULT_COLOR)  
         if self.old_x and self.old_y:
             obj_id = self.c.create_line(self.old_x, self.old_y, event.x, event.y,
                                width=self.line_width, fill=paint_color,
@@ -126,6 +132,9 @@ class Paint(object):
     def close_window(self, event=None):
         self.root.destroy()
 
+    def bounding_box(self, x, y, width, height, color):
+        self.c.create_rectangle(x, y, x+width, y+height, fill=color)
+
     def predict(self):
         # Hide the button grid
         self.pen_button.grid_forget()
@@ -143,9 +152,8 @@ class Paint(object):
         height = self.root.winfo_height() 
 
         bbox = (left, top, width, height)
-        img = pyautogui.screenshot(region=bbox)
-        self.screenshot_img = img # image is stored here
-        print(self.screenshot_img)
+        img = pyautogui.screenshot(region=bbox) 
+        self.screenshot_img = img # PIL image is stored here
 
         # Show the button grid again
         self.pen_button.grid(row=0, column=0)
@@ -158,21 +166,35 @@ class Paint(object):
 
     def run_inference(self):
         model = SimpleYOLO()
-        model.load_state_dict(torch.load('cnn_deep_model.pth', weights_only=True))
+        model.load_state_dict(torch.load('models/cnn_deep_model.pth', weights_only=True))
         model.eval()
 
-        input_tensor = transform(self.screenshot_img) # grayscale and totensor 
-        input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
+        ss_img = self.screenshot_img 
+        inverted_image = PIL.ImageOps.invert(ss_img) if ss_img is not None else print("ss_img has type None")
+        input_tensor = transform(inverted_image) if inverted_image is not None else print("input_tensor is None")
 
+        if isinstance(input_tensor, torch.Tensor):   
+            input_tensor = input_tensor * 3.0 # brighten gray values
+
+            showIm = np.squeeze(input_tensor.numpy()) 
+            plt.imshow(showIm)
+            plt.show()
+
+            input_tensor = torch.unsqueeze(input_tensor, 0) # Add batch dim
+            print(input_tensor)
+            
+           
         with torch.no_grad():
             output = model(input_tensor)
         
         output = output.squeeze(0)  # Remove batch dimension
         print(output.shape)
         predictions = list(output)
+        print(f"preds: {predictions}, pred_length: {len(predictions)}")
         predictions = output[4:len(output)]
         classes = [0,1,2,3,4,5,6,7,8,9]
-        print(predictions)
+
+        bb_values = output[0:4]
 
         plt.clf()
         plt.bar(classes, predictions, color = 'skyblue')
