@@ -19,14 +19,21 @@ import torch.nn.functional as F
 from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
 from train_torch.mnist_train_torch_CNN_deep import EnhancedCNN, cnn_transform
 
+'''
+To test your model:
+1. import your model and a transform (make sure no duplicates)
+2. scroll down to def run_inference and follow instructions there
+'''
+
+
 class Paint(object):
 
     DEFAULT_PEN_SIZE = 5.0
-    DEFAULT_COLOR = 'black'
+    DEFAULT_COLOR = 'white'
 
     def __init__(self):
         self.root = Tk()
-        self.root.geometry("600x600")  
+        self.root.geometry("1000x1000")  
         self.root.title("Paint Window")
         self.window_title = "Paint Window"
 
@@ -48,10 +55,10 @@ class Paint(object):
         self.predict_button = Button(self.root, text='predict', command=self.predict)
         self.predict_button.grid(row=0, column=1)
 
-        self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
+        self.choose_size_button = Scale(self.root, from_=1, to=50, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4)
 
-        self.c = Canvas(self.root, bg='white', width=600, height=600)
+        self.c = Canvas(self.root, bg='black', width=1000, height=1000)
         self.c.grid(row=1, columnspan=5)
 
         self.setup()
@@ -133,7 +140,7 @@ class Paint(object):
         self.root.destroy()
 
     def bounding_box(self, x, y, width, height, color):
-        self.c.create_rectangle(x, y, x+width, y+height, fill=color)
+        self.c.create_rectangle(x, y, x+width, y-height, fill=color)
 
     def predict(self):
         # Hide the button grid
@@ -165,36 +172,49 @@ class Paint(object):
         self.run_inference()
 
     def run_inference(self):
-        model = SimpleYOLO()
-        model.load_state_dict(torch.load('models/cnn_deep_model.pth', weights_only=True))
+        model = SimpleYOLO() # instance of your model class here
+        model.load_state_dict(torch.load('models/cnn_deep_model.pth', weights_only=True)) 
+        # change to wherever you saved the params from your model
         model.eval()
 
         ss_img = self.screenshot_img 
-        inverted_image = PIL.ImageOps.invert(ss_img) if ss_img is not None else print("ss_img has type None")
-        input_tensor = transform(inverted_image) if inverted_image is not None else print("input_tensor is None")
+        # inverted_image = PIL.ImageOps.invert(ss_img) if ss_img is not None else print("ss_img has type None")
+        # input_tensor = transform(inverted_image) if inverted_image is not None else print("input_tensor is None")
 
+        input_tensor = transform(ss_img) # input_tensor should be a tensor with dimensions [1, 28, 28]
+        
         if isinstance(input_tensor, torch.Tensor):   
-            input_tensor = input_tensor * 3.0 # brighten gray values
-
+            input_tensor = input_tensor * 5.0
             showIm = np.squeeze(input_tensor.numpy()) 
-            plt.imshow(showIm)
+            plt.imshow(showIm, cmap='Grays') 
             plt.show()
 
             input_tensor = torch.unsqueeze(input_tensor, 0) # Add batch dim
             print(input_tensor)
             
-           
+        from yolo.mnist_train_simple_yolo import getTensorEx
         with torch.no_grad():
+            # exampleFromDataset = getTensorEx().unsqueeze(dim=0)
+            # print(f"Shape: {exampleFromDataset.shape}")
             output = model(input_tensor)
+            
         
         output = output.squeeze(0)  # Remove batch dimension
         print(output.shape)
         predictions = list(output)
         print(f"preds: {predictions}, pred_length: {len(predictions)}")
-        predictions = output[4:len(output)]
+        predictions = output[4:len(output)] # MUST CHANGE THIS IF NOT YOLO SET 
         classes = [0,1,2,3,4,5,6,7,8,9]
 
-        bb_values = output[0:4]
+        bb_values = output[0:4] # CENTER of x value, CENTER of y value, width, height
+        bb_x = int(bb_values[0]) * 1000/28
+        bb_y = int(bb_values[1]) * 1000/28
+        bb_w = int(bb_values[2]) * 1000/28
+        bb_h = int(bb_values[3]) * 1000/28
+
+        # print(f"bb coords: {bb_x-bb_w//2, bb_y+bb_h//2, bb_w, bb_h}")
+        # self.bounding_box(x=(bb_x-bb_w//2), y=(bb_y+bb_h//2), width=bb_w, height=bb_h, color='red')
+        # tkinter box: top left, bottom right
 
         plt.clf()
         plt.bar(classes, predictions, color = 'skyblue')
