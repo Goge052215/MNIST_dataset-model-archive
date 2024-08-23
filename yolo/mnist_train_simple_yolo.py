@@ -20,7 +20,7 @@ class SimpleYOLO(nn.Module):
         self.batch_norm3 = nn.BatchNorm2d(128)
         self.fc1 = nn.Linear(128 * 3 * 3, 512)
         self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 4 + 10)
+        self.fc3 = nn.Linear(256, 10 + 4) 
         self.dropout = nn.Dropout(0.5)
         self.leaky_relu = nn.LeakyReLU(0.1)
 
@@ -39,6 +39,7 @@ class SimpleYOLO(nn.Module):
 
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
+    transforms.Grayscale(num_output_channels=1),
     transforms.ToTensor(),
 ])
 
@@ -67,7 +68,6 @@ def train(model, device, train_loader, optimizer, criterion, epoch):
         optimizer.step()
 
         train_loader_tqdm.set_postfix(loss=loss.item(), refresh=False)
-    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
 
 
 def test(model, device, test_loader, criterion):
@@ -91,21 +91,25 @@ def test(model, device, test_loader, criterion):
     accuracy = 100. * correct / len(test_loader.dataset)
     return accuracy
 
+def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = SimpleYOLO().to(device)
+    optimizer = RMSprop(model.parameters(), lr=0.001)
+    criterion = nn.MSELoss()
+    scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleYOLO().to(device)
-optimizer = RMSprop(model.parameters(), lr=0.001)
-criterion = nn.MSELoss()
-scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
+    final_accuracy = 0  # To store the final accuracy after all epochs
 
-final_accuracy = 0  # To store the final accuracy after all epochs
+    num_epochs = 20
 
-num_epochs = 20
+    for epoch in range(1, num_epochs + 1):
+        avg_loss = train(model, device, train_loader, optimizer, criterion, epoch)
+        accuracy = test(model, device, test_loader, criterion)
+        scheduler.step(avg_loss)  # Update learning rate based on training loss
+        final_accuracy = accuracy
 
-for epoch in range(1, num_epochs + 1):
-    avg_loss = train(model, device, train_loader, optimizer, criterion, epoch)
-    accuracy = test(model, device, test_loader, criterion)
-    scheduler.step(avg_loss)  # Update learning rate based on training loss
-    final_accuracy = accuracy
+    torch.save(model.state_dict(), 'cnn_deep_model.pth')  # Save the trained model (moved this down)
+    print(f"Accuracy: {final_accuracy:.2f}%")
 
-print(f"Accuracy: {final_accuracy:.2f}%")
+if __name__ == '__main__':
+    main()
