@@ -6,9 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from train_torch.nmist_train_torch_CNN_deep import EnhancedCNN
-
-import threading
-from flask import Flask, render_template
+import pygetwindow
 
 # Load model ----------------------------------------------------------------------
 model = EnhancedCNN()
