@@ -6,7 +6,6 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm  # Import tqdm for progress bars
 from torch.optim.lr_scheduler import StepLR
-from ultralytics import YOLO
 
 
 class SimpleYOLO(nn.Module):
