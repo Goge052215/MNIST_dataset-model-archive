@@ -76,7 +76,7 @@ if __name__ == '__main__':
         data=yaml_path,
         epochs=15,
         imgsz=640,
-        batch=128,
+        batch=64,
         device=0,
         amp=True,
         workers=4,
@@ -89,4 +89,3 @@ if __name__ == '__main__':
     metrics = model.val()
 
     print(f"Model Performance: {metrics}")
-    
