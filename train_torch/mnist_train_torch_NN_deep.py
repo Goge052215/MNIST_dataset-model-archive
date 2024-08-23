@@ -63,7 +63,7 @@ print(f"Using device: {device}")
 model = DeepNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.adam.Adam(model.parameters(), lr=0.001)
 
 scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)
 

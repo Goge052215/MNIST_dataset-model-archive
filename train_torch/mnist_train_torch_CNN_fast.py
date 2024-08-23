@@ -5,6 +5,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.adam import Adam
 
 # Define transformations
 transform = transforms.Compose([
@@ -46,7 +47,7 @@ print(f"Using device: {device}")
 model = SimpleCNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.adam.Adam(model.parameters(), lr=0.001)
 
 scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, factor=0.5)
 

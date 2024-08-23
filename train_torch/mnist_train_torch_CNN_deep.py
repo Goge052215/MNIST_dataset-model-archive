@@ -9,14 +9,14 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.optim.rmsprop import RMSprop
 
 # Define transformations with enhanced data augmentation
-transform = transforms.Compose([
+cnn_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5,), (0.5,))
 ])
 
 
-train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=cnn_transform)
+test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=cnn_transform)
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
@@ -83,7 +83,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, num_epochs=18):
             progress_bar.set_postfix(loss=running_loss/(i+1))
         scheduler.step()
         'scheduler.step(running_loss / len(train_loader))'
-    torch.save(model.state_dict(), 'models/cnn_deep_model.pth')  # Save the trained model
+    torch.save(model.state_dict(), 'models/TEST_FOR_TKINTER_1.pth')  # Save the trained model
 
 
 def evaluate(model, test_loader):
