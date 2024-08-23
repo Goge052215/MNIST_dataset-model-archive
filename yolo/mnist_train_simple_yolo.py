@@ -23,8 +23,8 @@ class SimpleYOLO(nn.Module):
         self.fc1 = nn.Linear(128 * 3 * 3, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 4 + 10)
-        self.dropout = nn.Dropout(0.5)
-        self.leaky_relu = nn.LeakyReLU(0.1)
+        self.dropout = nn.Dropout(0.5)  # Dropping off the nodes
+        self.leaky_relu = nn.LeakyReLU(0.1)  # ReLU
 
     def forward(self, x):
         x = self.pool(self.leaky_relu(self.batch_norm1(self.conv1(x))))
@@ -41,7 +41,7 @@ class SimpleYOLO(nn.Module):
 
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
-    transforms.ToTensor(),
+    transforms.ToTensor(),  # Ensure fast so no action is needed
 ])
 
 # Fetch the dataset
@@ -96,22 +96,18 @@ def test(model, device, test_loader, criterion):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SimpleYOLO().to(device)
-optimizer = RMSprop(model.parameters(), lr=0.001)
+optimizer = RMSprop(model.parameters(), lr=0.001)  # In this scenario RMS is better than Adam
 criterion = nn.MSELoss()
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
-    final_accuracy = 0  # To store the final accuracy after all epochs
+final_accuracy = 0  # To store the final accuracy after all epochs
 
-    num_epochs = 20
+num_epochs = 20
 
-    for epoch in range(1, num_epochs + 1):
-        avg_loss = train(model, device, train_loader, optimizer, criterion, epoch)
-        accuracy = test(model, device, test_loader, criterion)
-        scheduler.step(avg_loss)  # Update learning rate based on training loss
-        final_accuracy = accuracy
+for epoch in range(1, num_epochs + 1):
+    avg_loss = train(model, device, train_loader, optimizer, criterion, epoch)
+    accuracy = test(model, device, test_loader, criterion)
+    scheduler.step(avg_loss)  # Update learning rate based on training loss
+    final_accuracy = accuracy
 
-    torch.save(model.state_dict(), 'cnn_deep_model.pth')  # Save the trained model (moved this down)
-    print(f"Accuracy: {final_accuracy:.2f}%")
-
-if __name__ == '__main__':
-    main()
+print(f"Accuracy: {final_accuracy:.2f}%")
