@@ -20,22 +20,25 @@ from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
 from train_torch.mnist_train_torch_CNN_deep import EnhancedCNN, cnn_transform
 
 '''
-To test your model:
-1. import your model and a transform (make sure no duplicates)
-2. scroll down to def run_inference and follow instructions there
+To test the model:
+- scroll down to main() call
 '''
-
 
 class Paint(object):
 
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'white'
 
-    def __init__(self):
+    def __init__(self, modelInstance, modelLoadFile, modelTransform, modelClassStart):
         self.root = Tk()
         self.root.geometry("1000x1000")  
         self.root.title("Paint Window")
         self.window_title = "Paint Window"
+
+        self.modelInstance = modelInstance
+        self.modelLoadFile = modelLoadFile
+        self.modelClassStart = modelClassStart
+        self.modelTransform = modelTransform
 
         self.pen_button = Button(self.root, text='pen', command=self.use_pen)
         self.pen_button.grid(row=0, column=0)
@@ -55,7 +58,7 @@ class Paint(object):
         self.predict_button = Button(self.root, text='predict', command=self.predict)
         self.predict_button.grid(row=0, column=1)
 
-        self.choose_size_button = Scale(self.root, from_=1, to=50, orient=HORIZONTAL)
+        self.choose_size_button = Scale(self.root, from_=1, to=1000, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4)
 
         self.c = Canvas(self.root, bg='black', width=1000, height=1000)
@@ -172,8 +175,8 @@ class Paint(object):
         self.run_inference()
 
     def run_inference(self):
-        model = SimpleYOLO() # instance of your model class here
-        model.load_state_dict(torch.load('models/cnn_deep_model.pth', weights_only=True)) 
+        model = self.modelInstance # instance of your model class here
+        model.load_state_dict(torch.load(self.modelLoadFile, weights_only=True)) 
         # change to wherever you saved the params from your model
         model.eval()
 
@@ -181,12 +184,12 @@ class Paint(object):
         # inverted_image = PIL.ImageOps.invert(ss_img) if ss_img is not None else print("ss_img has type None")
         # input_tensor = transform(inverted_image) if inverted_image is not None else print("input_tensor is None")
 
-        input_tensor = transform(ss_img) # input_tensor should be a tensor with dimensions [1, 28, 28]
+        input_tensor = self.modelTransform(ss_img) # input_tensor should be a tensor with dimensions [1, 28, 28]
         
         if isinstance(input_tensor, torch.Tensor):   
-            input_tensor = input_tensor * 5.0
+            input_tensor = input_tensor 
             showIm = np.squeeze(input_tensor.numpy()) 
-            plt.imshow(showIm, cmap='Grays') 
+            plt.imshow(showIm) 
             plt.show()
 
             input_tensor = torch.unsqueeze(input_tensor, 0) # Add batch dim
@@ -203,7 +206,7 @@ class Paint(object):
         print(output.shape)
         predictions = list(output)
         print(f"preds: {predictions}, pred_length: {len(predictions)}")
-        predictions = output[4:len(output)] # MUST CHANGE THIS IF NOT YOLO SET 
+        predictions = output[self.modelClassStart:len(output)] # MUST CHANGE THIS IF NOT YOLO SET 
         classes = [0,1,2,3,4,5,6,7,8,9]
 
         bb_values = output[0:4] # CENTER of x value, CENTER of y value, width, height
@@ -222,5 +225,11 @@ class Paint(object):
     
     
 if __name__ == '__main__':
-    paint_app = Paint()
+    paint_app = Paint(
+        modelInstance=SimpleYOLO(), 
+        modelLoadFile='models/cnn_deep_model.pth',
+        modelTransform=transform,
+        modelClassStart=4)
+    
+# modelClassStart is needed for something like yolo where there are other outputs (such as bb
     

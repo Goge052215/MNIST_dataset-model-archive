@@ -18,9 +18,9 @@ def deskew(image):
     if abs(moments['mu02']) < 1e-2:
         return image.copy()
     skew = moments['mu11'] / moments['mu02']
-    M = np.float32([[1, skew, -0.5 * 28 * skew], [0, 1, 0]])
-    img = cv2.warpAffine(image, M, (28, 28), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
-    return img
+    #M = np.float32([[1, skew, -0.5 * 28 * skew], [0, 1, 0]])
+   # img = cv2.warpAffine(image, M, (28, 28), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
+    #return img
 
 
 def reduce_noise(image):

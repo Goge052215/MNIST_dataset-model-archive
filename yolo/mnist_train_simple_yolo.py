@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import StepLR
 class SimpleYOLO(nn.Module):
     def __init__(self):
         super(SimpleYOLO, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, 1, padding=1)
+        self.conv1 = nn.Conv2d(1, 32, 3, 1, padding=1) # in, out, filter, stride
         self.conv2 = nn.Conv2d(32, 64, 3, 1, padding=1)
         self.conv3 = nn.Conv2d(64, 128, 3, 1, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
@@ -41,6 +41,7 @@ class SimpleYOLO(nn.Module):
 
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
+    transforms.Grayscale(num_output_channels=1), # KEEP THIS FOR DRAW.PY TO WORK
     transforms.ToTensor(),
 ])
 
@@ -48,9 +49,11 @@ transform = transforms.Compose([
 train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
 test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
 
-# vil1, vil2 = train_dataset[0]
-# print(vil1)
-# this confirms that data is scaled 0-1, white on black, vil1.show() confirms it is very bright
+def getTensorEx():
+    vil1, vil2 = test_dataset[0]
+    print(vil1)
+    return vil1
+    # this confirms that data is scaled 0-1, white on black, vil1.show() confirms it is very bright
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
