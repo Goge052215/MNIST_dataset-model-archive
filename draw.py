@@ -5,34 +5,35 @@ import threading
 from PIL import Image, ImageGrab
 import pyautogui
 import pygetwindow as gw
-import io 
+import io
 import numpy as np
 import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
+from torch.optim.adamw import adamw
 from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
 import torch.nn.functional as F
 
-class Paint(object):
 
+class Paint(object):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
 
     def __init__(self):
         self.root = Tk()
-        self.root.geometry("600x600")  
+        self.root.geometry("600x600")
         self.root.title("Paint Window")
         self.window_title = "Paint Window"
 
         self.pen_button = Button(self.root, text='pen', command=self.use_pen)
         self.pen_button.grid(row=0, column=0)
 
-        #self.brush_button = Button(self.root, text='brush', command=self.use_brush)
-        #self.brush_button.grid(row=0, column=1)
+        # self.brush_button = Button(self.root, text='brush', command=self.use_brush)
+        # self.brush_button.grid(row=0, column=1)
 
-        #self.color_button = Button(self.root, text='color', command=self.choose_color)
-        #self.color_button.grid(row=0, column=2)
+        # self.color_button = Button(self.root, text='color', command=self.choose_color)
+        # self.color_button.grid(row=0, column=2)
 
         self.eraser_button = Button(self.root, text='eraser', command=self.use_eraser)
         self.eraser_button.grid(row=0, column=3)
@@ -89,16 +90,16 @@ class Paint(object):
 
     def clear_canvas(self):
         self.c.delete("all")
-        self.objects.clear()  
+        self.objects.clear()
+
     def paint(self, event):
         self.line_width = self.choose_size_button.get()
         paint_color = 'white' if self.eraser_on else self.color
         if self.old_x and self.old_y:
             obj_id = self.c.create_line(self.old_x, self.old_y, event.x, event.y,
-                               width=self.line_width, fill=paint_color,
-                               capstyle=ROUND, smooth=TRUE, splinesteps=36)
+                                        width=self.line_width, fill=paint_color,
+                                        capstyle=ROUND, smooth=TRUE, splinesteps=36)
             self.objects.append(obj_id)  # Store the object's ID for undo
-
 
         self.old_x = event.x
         self.old_y = event.y
@@ -109,10 +110,10 @@ class Paint(object):
     def undo(self, event=None):
         if self.objects:
             # Remove the last object added to the canvas
-            last_object = self.objects[max(0,len(self.objects)-50):len(self.objects)]
+            last_object = self.objects[max(0, len(self.objects) - 50):len(self.objects)]
             for item in last_object:
                 self.c.delete(item)
-            self.objects = self.objects[0: len(self.objects)-50]
+            self.objects = self.objects[0: len(self.objects) - 50]
 
     def get_window_size(self):
         width = self.root.winfo_width()
@@ -138,13 +139,13 @@ class Paint(object):
         self.root.update_idletasks()  # Ensure all events are processed
 
         left = self.root.winfo_rootx()
-        top = self.root.winfo_rooty() 
+        top = self.root.winfo_rooty()
         width = self.root.winfo_width()
-        height = self.root.winfo_height() 
+        height = self.root.winfo_height()
 
         bbox = (left, top, width, height)
         img = pyautogui.screenshot(region=bbox)
-        self.screenshot_img = img # image is stored here
+        self.screenshot_img = img  # image is stored here
         print(self.screenshot_img)
 
         # Show the button grid again
@@ -161,24 +162,23 @@ class Paint(object):
         model.load_state_dict(torch.load('cnn_deep_model.pth', weights_only=True))
         model.eval()
 
-        input_tensor = transform(self.screenshot_img) # grayscale and totensor 
+        input_tensor = transform(self.screenshot_img)  # grayscale and totensor
         input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
 
         with torch.no_grad():
             output = model(input_tensor)
-        
+
         output = output.squeeze(0)  # Remove batch dimension
         print(output.shape)
         predictions = list(output)
         predictions = output[4:len(output)]
-        classes = [0,1,2,3,4,5,6,7,8,9]
+        classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         print(predictions)
 
         plt.clf()
-        plt.bar(classes, predictions, color = 'skyblue')
+        plt.bar(classes, predictions, color='skyblue')
         plt.show()
-    
-    
+
+
 if __name__ == '__main__':
     paint_app = Paint()
-    

@@ -1,7 +1,7 @@
 # Import reqiured modules
 import torch
 import torch.nn as nn
-import torch.optim as optim
+import torch.optim.adamw as optim
 from torch.optim.rmsprop import RMSprop  # Optimizer added
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
@@ -98,7 +98,7 @@ def test(model, device, test_loader, criterion):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SimpleYOLO().to(device)
-optimizer = optim.adamw.AdamW(model.parameters(), lr=0.001)  # In this scenario RMS is better than Adam
+optimizer = optim.AdamW(model.parameters(), lr=0.001)  # In this scenario RMS is better than Adam
 criterion = nn.MSELoss()
 scheduler = StepLR(optimizer, step_size=5, gamma=0.5)
 
