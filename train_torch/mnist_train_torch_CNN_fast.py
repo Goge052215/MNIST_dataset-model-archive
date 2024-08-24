@@ -5,7 +5,6 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.optim.adam import Adam
 
 # Define transformations
 transform = transforms.Compose([

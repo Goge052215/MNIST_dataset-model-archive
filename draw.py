@@ -1,9 +1,8 @@
-from tkinter import Tk, Canvas, Button, Scale, HORIZONTAL, RAISED, SUNKEN, ROUND, TRUE # dont use wildcard import
+from tkinter import *
 from tkinter.colorchooser import askcolor
 import threading
 
 from PIL import Image, ImageGrab
-import PIL.ImageOps    
 import pyautogui
 import pygetwindow as gw
 import io 
@@ -12,33 +11,19 @@ import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
-import torchvision
-import torchvision.transforms.functional as TF
-import torch.nn.functional as F
-
 from yolo.mnist_train_simple_yolo import SimpleYOLO, transform
-from train_torch.mnist_train_torch_CNN_deep import EnhancedCNN, cnn_transform
-
-'''
-To test the model:
-- scroll down to main() call
-'''
+import torch.nn.functional as F
 
 class Paint(object):
 
     DEFAULT_PEN_SIZE = 5.0
-    DEFAULT_COLOR = 'white'
+    DEFAULT_COLOR = 'black'
 
-    def __init__(self, modelInstance, modelLoadFile, modelTransform, modelClassStart):
+    def __init__(self):
         self.root = Tk()
-        self.root.geometry("1000x1000")  
+        self.root.geometry("600x600")  
         self.root.title("Paint Window")
         self.window_title = "Paint Window"
-
-        self.modelInstance = modelInstance
-        self.modelLoadFile = modelLoadFile
-        self.modelClassStart = modelClassStart
-        self.modelTransform = modelTransform
 
         self.pen_button = Button(self.root, text='pen', command=self.use_pen)
         self.pen_button.grid(row=0, column=0)
@@ -58,10 +43,10 @@ class Paint(object):
         self.predict_button = Button(self.root, text='predict', command=self.predict)
         self.predict_button.grid(row=0, column=1)
 
-        self.choose_size_button = Scale(self.root, from_=1, to=1000, orient=HORIZONTAL)
+        self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4)
 
-        self.c = Canvas(self.root, bg='black', width=1000, height=1000)
+        self.c = Canvas(self.root, bg='white', width=600, height=600)
         self.c.grid(row=1, columnspan=5)
 
         self.setup()
@@ -86,8 +71,8 @@ class Paint(object):
     def use_pen(self):
         self.activate_button(self.pen_button)
 
-    #def use_brush(self):
-        #self.activate_button(self.brush_button)
+    def use_brush(self):
+        self.activate_button(self.brush_button)
 
     def choose_color(self):
         self.eraser_on = False
@@ -105,10 +90,9 @@ class Paint(object):
     def clear_canvas(self):
         self.c.delete("all")
         self.objects.clear()  
-        
     def paint(self, event):
         self.line_width = self.choose_size_button.get()
-        paint_color = "white" if self.eraser_on else (self.color if self.color else self.DEFAULT_COLOR)  
+        paint_color = 'white' if self.eraser_on else self.color
         if self.old_x and self.old_y:
             obj_id = self.c.create_line(self.old_x, self.old_y, event.x, event.y,
                                width=self.line_width, fill=paint_color,
@@ -142,9 +126,6 @@ class Paint(object):
     def close_window(self, event=None):
         self.root.destroy()
 
-    def bounding_box(self, x, y, width, height, color):
-        self.c.create_rectangle(x, y, x+width, y-height, fill=color)
-
     def predict(self):
         # Hide the button grid
         self.pen_button.grid_forget()
@@ -162,8 +143,9 @@ class Paint(object):
         height = self.root.winfo_height() 
 
         bbox = (left, top, width, height)
-        img = pyautogui.screenshot(region=bbox) 
-        self.screenshot_img = img # PIL image is stored here
+        img = pyautogui.screenshot(region=bbox)
+        self.screenshot_img = img # image is stored here
+        print(self.screenshot_img)
 
         # Show the button grid again
         self.pen_button.grid(row=0, column=0)
@@ -175,49 +157,22 @@ class Paint(object):
         self.run_inference()
 
     def run_inference(self):
-        model = self.modelInstance # instance of your model class here
-        model.load_state_dict(torch.load(self.modelLoadFile, weights_only=True)) 
-        # change to wherever you saved the params from your model
+        model = SimpleYOLO()
+        model.load_state_dict(torch.load('cnn_deep_model.pth', weights_only=True))
         model.eval()
 
-        ss_img = self.screenshot_img 
-        # inverted_image = PIL.ImageOps.invert(ss_img) if ss_img is not None else print("ss_img has type None")
-        # input_tensor = transform(inverted_image) if inverted_image is not None else print("input_tensor is None")
+        input_tensor = transform(self.screenshot_img) # grayscale and totensor 
+        input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
 
-        input_tensor = self.modelTransform(ss_img) # input_tensor should be a tensor with dimensions [1, 28, 28]
-        
-        if isinstance(input_tensor, torch.Tensor):   
-            input_tensor = input_tensor 
-            showIm = np.squeeze(input_tensor.numpy()) 
-            plt.imshow(showIm) 
-            plt.show()
-
-            input_tensor = torch.unsqueeze(input_tensor, 0) # Add batch dim
-            print(input_tensor)
-            
-        from yolo.mnist_train_simple_yolo import getTensorEx
         with torch.no_grad():
-            # exampleFromDataset = getTensorEx().unsqueeze(dim=0)
-            # print(f"Shape: {exampleFromDataset.shape}")
             output = model(input_tensor)
-            
         
         output = output.squeeze(0)  # Remove batch dimension
         print(output.shape)
         predictions = list(output)
-        print(f"preds: {predictions}, pred_length: {len(predictions)}")
-        predictions = output[self.modelClassStart:len(output)] # MUST CHANGE THIS IF NOT YOLO SET 
+        predictions = output[4:len(output)]
         classes = [0,1,2,3,4,5,6,7,8,9]
-
-        bb_values = output[0:4] # CENTER of x value, CENTER of y value, width, height
-        bb_x = int(bb_values[0]) * 1000/28
-        bb_y = int(bb_values[1]) * 1000/28
-        bb_w = int(bb_values[2]) * 1000/28
-        bb_h = int(bb_values[3]) * 1000/28
-
-        # print(f"bb coords: {bb_x-bb_w//2, bb_y+bb_h//2, bb_w, bb_h}")
-        # self.bounding_box(x=(bb_x-bb_w//2), y=(bb_y+bb_h//2), width=bb_w, height=bb_h, color='red')
-        # tkinter box: top left, bottom right
+        print(predictions)
 
         plt.clf()
         plt.bar(classes, predictions, color = 'skyblue')
@@ -225,11 +180,5 @@ class Paint(object):
     
     
 if __name__ == '__main__':
-    paint_app = Paint(
-        modelInstance=SimpleYOLO(), 
-        modelLoadFile='models/cnn_deep_model.pth',
-        modelTransform=transform,
-        modelClassStart=4)
-    
-# modelClassStart is needed for something like yolo where there are other outputs (such as bb
+    paint_app = Paint()
     
