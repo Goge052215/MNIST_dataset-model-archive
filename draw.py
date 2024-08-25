@@ -221,8 +221,8 @@ class Paint(object):
 
         plt.clf()
         plt.bar(classes, predictions, color = 'skyblue')
-        plt.show()
-    
+        plt.show    
+        
     
 if __name__ == '__main__':
     paint_app = Paint(
